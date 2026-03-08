@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시간표 관리자</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body { max-width: 600px; margin: 0 auto; padding: 1rem; }
+
+    .admin-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .admin-card h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 1rem;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--muted-foreground); }
+    .info-value { font-weight: 500; color: var(--foreground); }
+
+    .form-group { margin-bottom: 0.75rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      margin-bottom: 0.3rem;
+    }
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .form-row input { flex: 1; }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.5rem 0.75rem;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 2px);
+      color: var(--foreground);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--ring);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--foreground);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--accent); }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+    .school-results {
+      margin-top: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 2px);
+      overflow: hidden;
+      display: none;
+    }
+    .school-results.visible { display: block; }
+    .school-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+      transition: background 0.1s;
+    }
+    .school-item:last-child { border-bottom: none; }
+    .school-item:hover { background: var(--accent); }
+    .school-item.selected { background: color-mix(in srgb, var(--primary) 10%, var(--background)); }
+    .school-region {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      background: var(--accent);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .status-msg {
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: calc(var(--radius) - 2px);
+    }
+    .status-ok { background: color-mix(in srgb, #22c55e 12%, var(--background)); color: #16a34a; }
+    .status-err { background: color-mix(in srgb, #ef4444 12%, var(--background)); color: #dc2626; }
+    .status-loading { color: var(--muted-foreground); }
+
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; margin: 0; }
+    header a {
+      font-size: 0.8rem;
+      color: var(--muted-foreground);
+      text-decoration: none;
+    }
+    header a:hover { color: var(--foreground); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚙️ 시간표 관리자</h1>
+    <a href="/">← 시간표 보기</a>
+  </header>
+
+  <!-- Current Settings -->
+  <div class="admin-card">
+    <h2>현재 설정</h2>
+    <div class="info-row">
+      <span class="info-label">학교</span>
+      <span class="info-value" id="cur-school">로딩 중...</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">학년/반</span>
+      <span class="info-value" id="cur-class">로딩 중...</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">학교 코드</span>
+      <span class="info-value" id="cur-code" style="font-size:0.8rem; font-family: monospace;">-</span>
+    </div>
+  </div>
+
+  <!-- School Search -->
+  <div class="admin-card">
+    <h2>학교 검색</h2>
+    <div class="form-group">
+      <label>학교명</label>
+      <div class="form-row">
+        <input type="text" id="search-input" placeholder="예: 홍천중" value="" />
+        <button class="btn btn-secondary btn-sm" id="search-btn">검색</button>
+      </div>
+    </div>
+    <div id="search-status" class="status-msg" style="display:none"></div>
+    <div class="school-results" id="school-results"></div>
+  </div>
+
+  <!-- Grade / Class -->
+  <div class="admin-card">
+    <h2>학년/반 설정</h2>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label>학년</label>
+        <input type="number" id="grade-input" min="1" max="6" value="1" />
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>반</label>
+        <input type="number" id="class-input" min="1" max="20" value="3" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="admin-card">
+    <h2>저장 및 업데이트</h2>
+    <div id="save-status" class="status-msg" style="display:none"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="save-btn">설정 저장</button>
+      <button class="btn btn-secondary" id="refresh-btn">시간표 새로고침</button>
+    </div>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

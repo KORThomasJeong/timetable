@@ -1,0 +1,21 @@
+{
+  "name": "timetable",
+  "version": "1.0.0",
+  "description": "홍천중학교 1-3반 시간표 웹앱",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "overrides": {
+    "undici": "5.28.4"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "comcigan-parser": "^1.0.0",
+    "node-cron": "^3.0.3",
+    "web-push": "^3.6.7",
+    "dotenv": "^16.4.1"
+  }
+}
