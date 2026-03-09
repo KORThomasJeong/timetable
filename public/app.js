@@ -123,6 +123,24 @@ function toggleTheme() {
   applyTheme(next);
 }
 
+function formatToday() {
+  const d = new Date();
+  const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${weekNames[d.getDay()]}요일`;
+}
+
+async function loadMotivationalMessages() {
+  try {
+    const res = await fetch('/motivational.md');
+    const text = await res.text();
+    return text.split('\n')
+      .map(l => l.trim())
+      .filter(l => l && !l.startsWith('#'));
+  } catch {
+    return ['오늘도 파이팅!'];
+  }
+}
+
 // ── App ────────────────────────────────────────────────
 class App {
   constructor() {
@@ -131,15 +149,27 @@ class App {
     this.currentData = null;
     this.isSubscribed = false;
     this._periodTimer = null;
+    this._motivationalMessages = [];
     initTheme();
     this.init();
   }
 
   async init() {
     this.bindEvents();
+    this._motivationalMessages = await loadMotivationalMessages();
+    this.updateTodayBar();
     await this.loadHistory();
     await this.loadTimetable(this.currentWeekStart);
     this.initServiceWorker();
+  }
+
+  updateTodayBar() {
+    document.getElementById('today-date').textContent = formatToday();
+    const msgs = this._motivationalMessages;
+    if (msgs.length > 0) {
+      const msg = msgs[Math.floor(Math.random() * msgs.length)];
+      document.getElementById('motivational-msg').textContent = msg;
+    }
   }
 
   bindEvents() {
@@ -238,10 +268,15 @@ class App {
     corner.className = 'tt-period-num-header';
     grid.appendChild(corner);
 
+    const [wy, wm, wd] = this.currentWeekStart.split('-').map(Number);
+    const weekStartDate = new Date(wy, wm - 1, wd);
+
     days.forEach((day, i) => {
       const cell = document.createElement('div');
       cell.className = 'tt-day-cell' + (isThisWeek && i === todayIdx ? ' today' : '');
-      cell.textContent = day;
+      const dateForDay = new Date(weekStartDate);
+      dateForDay.setDate(dateForDay.getDate() + i);
+      cell.innerHTML = `<span class="day-name">${day}</span><span class="day-date">${dateForDay.getDate()}</span>`;
       grid.appendChild(cell);
     });
 
