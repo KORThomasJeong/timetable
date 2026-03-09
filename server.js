@@ -30,8 +30,8 @@ app.get('/api/timetable', (req, res) => {
     const history = queries.getHistory.all();
     if (history.length > 0) {
       const today = new Date().toISOString().split('T')[0];
-      // 오늘 이후이거나 가장 최근 주 선택
-      const best = history.find(h => h.week_start >= today) || history[0];
+      // DESC 순에서 오늘 이하인 첫 번째 주 = 오늘이 속한 주, 없으면 가장 최근 주
+      const best = history.find(h => h.week_start <= today) || history[0];
       row = queries.getTimetable.get(best.week_start);
       weekStart = best.week_start;
     }

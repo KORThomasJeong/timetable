@@ -28,14 +28,18 @@ function getSubjectColorName(subject) {
 
 function getWeekStart(date) {
   const d = new Date(date);
-  const day = d.getDay(); // 0=일, 1=월, ..., 6=토
+  const day = d.getDay(); // 0=일, 1=월, ..., 6=토 (로컬 타임존 기준)
   // 주말(토/일)이면 다음 주 월요일, 평일이면 이번 주 월요일
   let offset;
   if (day === 0) offset = 1;
   else if (day === 6) offset = 2;
   else offset = -(day - 1);
   d.setDate(d.getDate() + offset);
-  return d.toISOString().split('T')[0];
+  // toISOString()은 UTC 기준이라 KST 오전 9시 이전에 날짜가 밀리므로 로컬 메서드 사용
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
 }
 
 function formatWeekLabel(weekStart) {
@@ -154,15 +158,26 @@ class App {
     } catch {
       this.history = [];
     }
-    const current = getWeekStart(new Date());
-    if (!this.history.includes(current)) this.history.unshift(current);
+
+    // DB에 있는 주차 목록 기준으로 현재 주 결정 (DESC 순: 가장 최근 주부터)
+    // getWeekStart(new Date())보다 ≤ 인 첫 번째 주 = 오늘이 속한 주
+    const todayWeek = getWeekStart(new Date());
+    const currentInHistory = this.history.find(w => w <= todayWeek);
+
+    if (currentInHistory) {
+      this.currentWeekStart = currentInHistory;
+    } else if (this.history.length > 0) {
+      // 저장된 주가 모두 미래라면 가장 가까운 주 선택
+      this.currentWeekStart = this.history[this.history.length - 1];
+    }
+    // currentInHistory가 없고 history도 비어있으면 todayWeek 그대로 유지
 
     const sel = document.getElementById('week-select');
     sel.innerHTML = '';
     this.history.forEach(week => {
       const opt = document.createElement('option');
       opt.value = week;
-      opt.textContent = week === current ? '이번 주' : formatWeekLabel(week);
+      opt.textContent = week === this.currentWeekStart ? '이번 주' : formatWeekLabel(week);
       sel.appendChild(opt);
     });
   }
